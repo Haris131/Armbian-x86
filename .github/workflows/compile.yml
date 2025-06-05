@@ -54,6 +54,8 @@ env:
   
 jobs:  
   build-armbian:  
+    permissions:
+      contents: write
     runs-on: ubuntu-22.04  
     steps:  
       - name: Checkout  
@@ -146,7 +148,7 @@ jobs:
         
       - name: Upload image to Release  
         if: success() 
-        uses: softprops/action-gh-release@v2
+        uses: ncipollo/release-action@main
         with:  
           tag: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
           name: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
