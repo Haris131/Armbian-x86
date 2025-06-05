@@ -1,0 +1,166 @@
+name: Build Armbian uefi-x86 Borad
+  
+on:  
+  workflow_dispatch:  
+    inputs:  
+      BOARD:  
+        description: 'Board type'  
+        required: true 
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - uefi-x86
+      BRANCH:  
+        description: 'Armbian branch'  
+        default: 'current'  
+        required: false 
+        type: choice 
+        options:
+          - current
+          - edge
+      RELEASE:  
+        description: 'Release name' 
+        default: 'bookworm'
+        required: true  
+        type: choice
+        options:
+          - jammy
+          - bookworm
+          - noble
+          - bullseye
+      BUILD_DESKTOP:  
+        description: 'Build desktop environment'  
+        default: 'no'  
+        required: false  
+        type: choice
+        options:
+          - no
+      COMPRESS_OUTPUTIMAGE:  
+        description: 'Compress output image'  
+        default: 'sha,xz'  
+        required: false  
+        type: string  
+      BOOT_LOGO:  
+        description: 'Include boot logo'  
+        default: 'yes'  
+        required: false  
+        type: choice 
+        options:
+          - yes
+          - no
+env:
+  TZ: Asia/Jakarta
+  
+jobs:  
+  build-armbian:  
+    runs-on: ubuntu-22.04  
+    steps:  
+      - name: Checkout  
+        uses: actions/checkout@v3    
+
+      - name: Initialization environment
+        id: init
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          docker_images_ids=$(docker images -q)
+          if [ -n "$docker_images_ids" ]; then
+            docker rmi $docker_images_ids
+          fi
+          docker image prune -a -f
+          sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* openjdk* mysql* php* mongodb* dotnet* moby* snapd* android* || true
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "${TZ}"
+          sudo mkdir -p /mnt/workdir
+          sudo chown $USER:$GROUPS /mnt/workdir
+          df -Th
+  
+      - name: Download source code
+        working-directory: /mnt/workdir
+        run: |
+          df -hT ${PWD}
+          #git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build 
+          wget https://github.com/armbian/build/archive/refs/tags/v25.5.1.tar.gz
+          tar xfz v25.5.1.tar.gz
+          mv build-25.5.1 build
+          ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
+  
+      - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
+        run: |
+          cd build/
+          declare -a SUPPORTED_BOARDS=("uefi-x86")
+          compile_board() {
+            local BOARD=$1
+            echo "Compiling for board: $BOARD"
+            ./compile.sh BOARD=$BOARD RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} \
+              BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} KERNEL_CONFIGURE=no \
+              COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }} BOOT_LOGO=${{ inputs.BOOT_LOGO }} \
+              > "log-${BOARD}.txt" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "Compilation failed for board: $BOARD" >&2
+              return 1
+            fi
+            return 0
+          }
+          compile_all_boards() {
+            FAILED_BOARDS=()
+            for BOARD in "${SUPPORTED_BOARDS[@]}"; do
+              if ! compile_board "$BOARD"; then
+                FAILED_BOARDS+=("$BOARD")
+              fi
+            done
+            if [ ${#FAILED_BOARDS[@]} -gt 0 ]; then
+              echo "The following boards failed to compile: ${FAILED_BOARDS[*]}" >&2
+            else
+              echo "All boards compiled successfully."
+            fi
+          }
+          compile_single_board() {
+            local BOARD=${{ inputs.BOARD }}
+            if [[ " ${SUPPORTED_BOARDS[@]} " =~ " $BOARD " ]]; then
+              if ! compile_board "$BOARD"; then
+                echo "Compilation failed for specified board: $BOARD" >&2
+                exit 1
+              fi
+            else
+              echo "Unsupported board: $BOARD" >&2
+              exit 1
+            fi
+          }
+          if [ "${{ inputs.BOARD }}" = "all" ]; then
+            compile_all_boards
+          else
+            compile_single_board
+          fi   
+          
+      - name: Set current year and month  
+        run: |  
+          echo "CURRENT_YEAR_MONTH=$(date +'%Y%m')" >> $GITHUB_ENV  
+
+      - name: Prepare Release Metadata
+        run: |
+          latest_image=$(ls ${{ github.workspace }}/build/output/images/Armbian-unofficial_*.img.xz | sort -V | tail -n 1)
+          version=$(echo "$latest_image" | cut -d'_' -f2)  
+          echo "VERSION=$version" >> $GITHUB_ENV
+        
+      - name: Upload image to Release  
+        if: success() 
+        uses: ncipollo/release-action@main
+        with:  
+          tag: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"  
+          name: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"  
+          artifacts: "${{ github.workspace }}/build/output/images/*"  
+          allowUpdates: true 
+          removeArtifacts: false 
+          replacesArtifacts: true 
+          token: ${{ secrets.GITHUB_TOKEN }}  
+          body: |  
+            ### Armbian Image Information  
+            - Release: ${{ github.event.inputs.RELEASE }}    
+            - Version: ${{ env.VERSION }}  
+            ### Armbian Image Verification  
+            - sha256sum   
+          draft: false  
+          prerelease: false  
