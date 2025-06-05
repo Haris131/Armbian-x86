@@ -96,8 +96,7 @@ jobs:
             echo "Compiling for board: $BOARD"
             ./compile.sh BOARD=$BOARD RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} \
               BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} KERNEL_CONFIGURE=no \
-              COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }} BOOT_LOGO=${{ inputs.BOOT_LOGO }} \
-              > "log-${BOARD}.txt" 2>&1
+              COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }} BOOT_LOGO=${{ inputs.BOOT_LOGO }}
             if [ $? -ne 0 ]; then
               echo "Compilation failed for board: $BOARD" >&2
               return 1
