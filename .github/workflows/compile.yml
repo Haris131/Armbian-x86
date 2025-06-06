@@ -10,14 +10,6 @@ on:
         type: choice
         options:
           - uefi-x86
-      BRANCH:  
-        description: 'Armbian branch'  
-        default: 'current'  
-        required: false 
-        type: choice 
-        options:
-          - current
-          - edge
       RELEASE:  
         description: 'Release name' 
         default: 'jammy'
@@ -39,7 +31,7 @@ on:
         description: 'Compress output image'  
         default: 'sha,xz'  
         required: false  
-        type: string  
+        type: string
 
 env:
   TZ: Asia/Jakarta
@@ -83,10 +75,13 @@ jobs:
         run: |
           cd build/
           echo "Compiling for board: $BOARD"
-          ./compile.sh BOARD=$BOARD RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} \
-          BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} KERNEL_CONFIGURE=no \
-          COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }}
-      
+          ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
+            BUILD_ONLY=default HOST=armbian EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes
+          if [ $? -ne 0 ]; then
+            echo "Compilation failed for board: $BOARD" >&2
+            return 1
+          fi   
+          
       - name: Set current year and month  
         run: |  
           echo "CURRENT_YEAR_MONTH=$(date +'%Y%m')" >> $GITHUB_ENV  
@@ -114,4 +109,4 @@ jobs:
             ### Armbian Image Verification  
             - sha256sum   
           draft: false  
-          prerelease: false  
+          prerelease: false
