@@ -18,6 +18,7 @@ on:
         type: choice 
         options:
           - current
+          - legacy
           - edge
       RELEASE:  
         description: 'Release name' 
@@ -38,17 +39,10 @@ on:
           - no
       COMPRESS_OUTPUTIMAGE:  
         description: 'Compress output image'  
-        default: 'sha,xz'  
+        default: 'xz'  
         required: false  
         type: string  
-      BOOT_LOGO:  
-        description: 'Include boot logo'  
-        default: 'no'  
-        required: false  
-        type: choice 
-        options:
-          - yes
-          - no
+
 env:
   TZ: Asia/Jakarta
   
@@ -90,50 +84,11 @@ jobs:
       - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
         run: |
           cd build/
-          declare -a SUPPORTED_BOARDS=("uefi-x86")
-          compile_board() {
-            local BOARD=$1
-            echo "Compiling for board: $BOARD"
-            ./compile.sh BOARD=$BOARD RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} \
-              BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} KERNEL_CONFIGURE=no \
-              COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }} BOOT_LOGO=${{ inputs.BOOT_LOGO }}
-            if [ $? -ne 0 ]; then
-              echo "Compilation failed for board: $BOARD" >&2
-              return 1
-            fi
-            return 0
-          }
-          compile_all_boards() {
-            FAILED_BOARDS=()
-            for BOARD in "${SUPPORTED_BOARDS[@]}"; do
-              if ! compile_board "$BOARD"; then
-                FAILED_BOARDS+=("$BOARD")
-              fi
-            done
-            if [ ${#FAILED_BOARDS[@]} -gt 0 ]; then
-              echo "The following boards failed to compile: ${FAILED_BOARDS[*]}" >&2
-            else
-              echo "All boards compiled successfully."
-            fi
-          }
-          compile_single_board() {
-            local BOARD=${{ inputs.BOARD }}
-            if [[ " ${SUPPORTED_BOARDS[@]} " =~ " $BOARD " ]]; then
-              if ! compile_board "$BOARD"; then
-                echo "Compilation failed for specified board: $BOARD" >&2
-                exit 1
-              fi
-            else
-              echo "Unsupported board: $BOARD" >&2
-              exit 1
-            fi
-          }
-          if [ "${{ inputs.BOARD }}" = "all" ]; then
-            compile_all_boards
-          else
-            compile_single_board
-          fi   
-          
+          echo "Compiling for board: $BOARD"
+          ./compile.sh BOARD=$BOARD RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} \
+          BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} KERNEL_CONFIGURE=no \
+          COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }}
+      
       - name: Set current year and month  
         run: |  
           echo "CURRENT_YEAR_MONTH=$(date +'%Y%m')" >> $GITHUB_ENV  
