@@ -83,10 +83,7 @@ jobs:
         working-directory: /mnt/workdir
         run: |
           df -hT ${PWD}
-          #git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build 
-          wget https://github.com/armbian/build/archive/refs/tags/v25.5.1.tar.gz
-          tar xfz v25.5.1.tar.gz
-          mv build-25.5.1 build
+          git clone -q --single-branch --depth=1 --branch=v25.05 https://github.com/armbian/build.git build
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
   
       - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
