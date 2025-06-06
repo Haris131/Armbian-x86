@@ -48,16 +48,15 @@ jobs:
         working-directory: /mnt/workdir
         run: |
           df -hT ${PWD}
-          git clone -q --single-branch --depth=1 --branch=v25.05 https://github.com/armbian/build.git build
+          git clone -q --single-branch --depth=1 --branch=main https://github.com/armbian/build.git build
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
-          echo -n 25.05.1 > build/VERSION
   
       - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
         run: |
           cd build/
           echo "Compiling for board: $BOARD"
           ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
-            BUILD_ONLY=default HOST=armbian EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes
+            BUILD_ONLY=default EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes
           if [ $? -ne 0 ]; then
             echo "Compilation failed for board: uefi-x86" >&2
             return 1
