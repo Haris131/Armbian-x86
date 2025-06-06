@@ -59,7 +59,7 @@ jobs:
           ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
             BUILD_ONLY=default HOST=armbian EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes
           if [ $? -ne 0 ]; then
-            echo "Compilation failed for board: $BOARD" >&2
+            echo "Compilation failed for board: uefi-x86" >&2
             return 1
           fi   
           
@@ -69,6 +69,7 @@ jobs:
 
       - name: Prepare Release Metadata
         run: |
+          find ${{ github.workspace }}/build/output
           latest_image=$(ls ${{ github.workspace }}/build/output/images/Armbian-unofficial_*.img.xz | sort -V | tail -n 1)
           version=$(echo "$latest_image" | cut -d'_' -f2)  
           echo "VERSION=$version" >> $GITHUB_ENV
