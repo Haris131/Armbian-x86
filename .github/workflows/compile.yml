@@ -83,7 +83,7 @@ jobs:
         working-directory: /mnt/workdir
         run: |
           df -hT ${PWD}
-          git clone -q --single-branch --depth=1 --branch=v25.05.1 https://github.com/armbian/build.git build
+          git clone -q --single-branch --depth=1 --branch=v25.5.1 https://github.com/armbian/build.git build
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
           echo -n 25.05.1 > build/VERSION
   
