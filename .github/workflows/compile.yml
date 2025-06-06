@@ -3,13 +3,6 @@ name: Build Armbian uefi-x86 Board
 on:  
   workflow_dispatch:  
     inputs:  
-      BOARD:  
-        description: 'Board type'  
-        required: true 
-        default: 'uefi-x86'
-        type: choice
-        options:
-          - uefi-x86
       RELEASE:  
         description: 'Release name' 
         default: 'jammy'
@@ -20,18 +13,6 @@ on:
           - bookworm
           - noble
           - bullseye
-      BUILD_DESKTOP:  
-        description: 'Build desktop environment'  
-        default: 'no'  
-        required: false  
-        type: choice
-        options:
-          - no
-      COMPRESS_OUTPUTIMAGE:  
-        description: 'Compress output image'  
-        default: 'sha,xz'  
-        required: false  
-        type: string
 
 env:
   TZ: Asia/Jakarta
