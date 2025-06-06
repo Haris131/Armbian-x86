@@ -9,7 +9,6 @@ on:
         default: 'uefi-x86'
         type: choice
         options:
-          - all
           - uefi-x86
       BRANCH:  
         description: 'Armbian branch'  
@@ -18,7 +17,6 @@ on:
         type: choice 
         options:
           - current
-          - legacy
           - edge
       RELEASE:  
         description: 'Release name' 
@@ -39,7 +37,7 @@ on:
           - no
       COMPRESS_OUTPUTIMAGE:  
         description: 'Compress output image'  
-        default: 'xz'  
+        default: 'sha,xz'  
         required: false  
         type: string  
 
