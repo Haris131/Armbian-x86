@@ -7,6 +7,10 @@ on:
         description: 'SSH connection to Actions'
         required: true
         default: 'false'
+        type: choice
+        options:
+          - true
+          - false
       RELEASE:  
         description: 'Release name' 
         default: 'jammy'
@@ -17,6 +21,15 @@ on:
           - bookworm
           - noble
           - bullseye
+      Version:
+        description: 'Armbian Version'
+        default: 'main'
+        required: false 
+        type: choice
+        options: 
+          - main
+          - v25.05
+          - v24.11
 
 env:
   TZ: Asia/Jakarta
@@ -52,7 +65,7 @@ jobs:
         working-directory: /mnt/workdir
         run: |
           df -hT ${PWD}
-          git clone -q --single-branch --depth=1 --branch=main https://github.com/armbian/build.git build
+          git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
  
       - name: SSH connection to Actions
