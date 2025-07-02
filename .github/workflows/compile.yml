@@ -30,6 +30,18 @@ on:
           - main
           - v25.05
           - v24.11
+      FSTYPE:
+        description: 'Armbian ROOTFS TYPE'
+        default: 'ext4'
+        required: false 
+        type: choice
+        options: 
+          - ext4
+          - f2fs
+          - btrfs
+          - nilfs2
+          - xfs
+          - nfs
 
 env:
   TZ: Asia/Jakarta
@@ -77,8 +89,8 @@ jobs:
         run: |
           cd build/
           echo "Compiling for board: $BOARD"
-          ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
-            BUILD_ONLY=default EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes
+          ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
+BUILD_ONLY=default EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes INSTALL_HEADERS=yes ROOTFS_TYPE=${{ inputs.FSTYPE }}
           if [ $? -ne 0 ]; then
             echo "Compilation failed for board: uefi-x86" >&2
             return 1
